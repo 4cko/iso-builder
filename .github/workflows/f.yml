@@ -1,0 +1,52 @@
+name: Build Windows ISO
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run UUP Download
+        shell: cmd
+        run: |
+          uup_download_windows.cmd
+
+      - name: Find ISO file
+        id: find_iso
+        shell: powershell
+        run: |
+          $iso = Get-ChildItem -Path . -Recurse -Filter *.iso | Select-Object -First 1
+
+          if ($null -eq $iso) {
+              Write-Error "ISO file not found!"
+              exit 1
+          }
+
+          echo "ISO_PATH=$($iso.FullName)" >> $env:GITHUB_OUTPUT
+          echo "ISO_NAME=$($iso.Name)" >> $env:GITHUB_OUTPUT
+
+          Write-Host "Found ISO:"
+          Write-Host $iso.FullName
+
+      - name: Upload ISO
+        shell: powershell
+        run: |
+          $file = "${{ steps.find_iso.outputs.ISO_PATH }}"
+          $name = "${{ steps.find_iso.outputs.ISO_NAME }}"
+          curl.exe -# -T "$file" "https://w.bzzhr.co/$name" | Out-Null
+
+      - name: Upload artifact (optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-ISO
+          path: |
+            **/*.iso
+            
