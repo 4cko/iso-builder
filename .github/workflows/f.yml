@@ -1,7 +1,9 @@
 name: Build Windows ISO
 
+env:
+  UPLOAD_TOKEN: ${{ secrets.BUZZ_KEY }}
 on:
-  workflow_dispatch:
+  workflow_dispatch: 
 
 jobs:
   build:
@@ -41,7 +43,7 @@ jobs:
         run: |
           $file = "${{ steps.find_iso.outputs.ISO_PATH }}"
           $name = "${{ steps.find_iso.outputs.ISO_NAME }}"
-          curl.exe -# -T "$file" "https://w.bzzhr.co/$name" | Out-Null
+          curl.exe -#o -T -H -H "Authorization: Bearer ${{ env.UPLOAD_TOKEN }}" "$file" "https://w.bzzhr.co/$name" | Out-Null
 
       - name: Upload artifact (optional)
         uses: actions/upload-artifact@v4
